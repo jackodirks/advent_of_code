@@ -1,10 +1,7 @@
 use std::fs;
 use std::cmp;
 
-#[derive(Copy)]
-#[derive(Clone)]
-#[derive(PartialEq)]
-#[derive(Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Range {
     pub range_low: usize,
     pub range_high: usize
@@ -37,12 +34,11 @@ fn id_is_in_some_range(ingredient_id: usize, fresh_ranges: &Vec<Range>) -> bool 
     return false;
 }
 
-fn reduce_range_set(ranges: &[Range]) -> Vec<Range> {
-    let mut cpy = ranges.to_vec();
-    cpy.sort_by_key(|i| i.range_low);
-    let mut cur_range = cpy[0];
+fn reduce_range_set(mut ranges: Vec<Range>) -> Vec<Range> {
+    ranges.sort_by_key(|i| i.range_low);
+    let mut cur_range = ranges[0];
     let mut retval = Vec::new();
-    for range in cpy {
+    for range in ranges {
         if cur_range.value_in_range(range.range_low) {
             cur_range.range_high = cmp::max(cur_range.range_high, range.range_high);
         } else {
@@ -61,11 +57,8 @@ fn main() {
     let mut content_parts = contents.split("\n\n");
 
     let fresh_id_ranges = content_parts.next().unwrap();
-    let mut range_vec : Vec<Range> = Vec::new();
-    for id_range in fresh_id_ranges.lines() {
-        range_vec.push(Range::new(id_range));
-    }
-    range_vec = reduce_range_set(&range_vec);
+    let mut range_vec = fresh_id_ranges.lines().map(|line| Range::new(line)).collect();
+    range_vec = reduce_range_set(range_vec);
 
     let ingredient_ids = content_parts.next().unwrap();
     let mut fresh_ingredients = 0;
@@ -76,10 +69,7 @@ fn main() {
     }
     println!("Day 5, part 1: {fresh_ingredients}");
 
-    let mut fresh_id_count = 0;
-    for range in range_vec {
-        fresh_id_count += range.count_elements_in_range();
-    }
+    let fresh_id_count = range_vec.iter().map(|range| range.count_elements_in_range()).sum::<usize>();
 
     println!("Day 5, part 2: {fresh_id_count}");
 }
@@ -110,7 +100,7 @@ mod tests {
             Range::new("3-5"),
             Range::new("10-20"),
         ];
-        let output = reduce_range_set(&input);
+        let output = reduce_range_set(input);
         assert_eq!(output, expect);
 
     }
